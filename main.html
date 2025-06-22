@@ -1,0 +1,77 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Подсказка МКБ</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main>
+    <h2>🔍 Подсказка МКБ-10</h2>
+    <input type="text" id="mkbInput" placeholder="Например: J45" />
+    <button onclick="получить()">🔎 Найти</button>
+    <div id="result" class="section" style="margin-top:15px;"></div>
+  </main>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
+  <script src="firebase-config.js"></script>
+  <script>
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    async function получить() {
+      const input = document.getElementById('mkbInput').value.trim().toUpperCase();
+      const resultBox = document.getElementById('result');
+      resultBox.innerHTML = "⏳ Поиск...";
+
+      const doc = await db.collection("settings").doc("rules").get();
+      const data = doc.data().data || [];
+      const normalize = s => s.toString().replace(/\s+/g, "").replace(/[‐‑‒–—―]/g, "-")
+        .replace(/[\u200B-\u200D\uFEFF]/g, "").toUpperCase().trim();
+
+      const код = normalize(input);
+      const результат = [];
+
+      for (const запись of data) {
+        const raw = запись["Код МКБ-10"];
+        const список = raw.split(",").map(s => normalize(s));
+        for (const один of список) {
+          let совпадает = false;
+          if (один.includes("-")) совпадает = isInRange(код, один);
+          else if (/^[A-Z]\d{2}$/.test(один)) совпадает = isInRange(код, `${один}-${один}.9`);
+          else совпадает = normalize(один) === код;
+
+          if (совпадает) {
+            результат.push(запись);
+            break;
+          }
+        }
+      }
+
+      if (!результат.length) {
+        resultBox.innerHTML = "<b>❌ Не найдено</b>";
+        return;
+      }
+
+      const блоки = результат.map(row =>
+        `Повод обращения: <b>${row["Повод обращения"]}</b><br>Тип оплаты: <b>${row["Тип оплаты"]}</b>`);
+      resultBox.innerHTML = блоки.join("<hr>");
+    }
+
+    function isInRange(code, range) {
+      const parse = s => {
+        const m = s.match(/^([A-Z])(\d{2})(?:\.(\d))?$/);
+        return m ? { letter: m[1], major: +m[2], minor: m[3] ? +m[3] : 0 } : null;
+      };
+      const [start, end] = range.includes("-") ? range.split("-") : [range, range];
+      const a = parse(start), b = parse(end), x = parse(code);
+      if (!a || !b || !x) return false;
+      if (!start.includes(".")) a.minor = 0;
+      if (!end.includes(".")) b.minor = 9;
+      const idx = c => c.major * 10 + c.minor;
+      return a.letter === x.letter && b.letter === x.letter && idx(x) >= idx(a) && idx(x) <= idx(b);
+    }
+  </script>
+</body>
+</html>

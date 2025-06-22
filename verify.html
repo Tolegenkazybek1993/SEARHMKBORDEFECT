@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Проверка Excel</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header style="width:100%; text-align:center; padding:10px; background:#004080; color:white;">
+    Центр Медицинской Аналитики
+    <button onclick="logout()" style="float:right; margin-right:15px;">🚪 Выйти</button>
+  </header>
+  <main>
+    <div class="tabs">
+      <button class="tab-button active" onclick="showTab('check')">📄 Проверка Excel</button>
+      <button class="tab-button" onclick="showTab('mkb')">🔍 Подсказка МКБ-10</button>
+    </div>
+
+    <div id="check" class="tab-content active">
+      <h2>📄 Проверка Excel-файла</h2>
+      <input type="file" id="fileInput" accept=".xlsx" />
+      <button onclick="handleFile()">🚀 Проверить</button>
+      <div id="check-status" class="status-message"></div>
+      <a id="downloadLink" style="display:none;" download="checked.xlsx">📥 Скачать результат</a>
+    </div>
+
+    <div id="mkb" class="tab-content" style="display:none;">
+      <h2>🔍 Подсказка по МКБ-10</h2>
+      <input type="text" id="mkbInput" placeholder="Например: J45" />
+      <button onclick="получить()">🔎 Найти</button>
+      <div id="result" class="result-box" style="margin-top:10px; display:none;"></div>
+    </div>
+  </main>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="verify.js"></script>
+</body>
+</html>
